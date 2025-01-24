@@ -1,1 +1,1 @@
-Project Description: https://cs50.harvard.edu/ai/2023/projects/6/questions/
+Project Description: https://cs50.harvard.edu/ai/2024/projects/6/
