@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from sklearn.model_selection import train_test_split
 
-EPOCHS = 12
+EPOCHS = 10
 IMG_WIDTH = 30
 IMG_HEIGHT = 30
 NUM_CATEGORIES = 43
@@ -60,24 +60,15 @@ def load_data(data_dir):
     """
     images = []
     labels = []
-    for i in os.listdir(data_dir):
-        print(i)
-        # print(type(i))
-        # sub_dir = str(i)
-        sub_dir_path = os.path.join(data_dir,i)
-        imgs = os.listdir(sub_dir_path)
-        for image in range(len(imgs)):
-            # print(images[image])
-            # print(type(images[image]), " img")
-            image_path = os.path.join(sub_dir_path,imgs[image])
-            #print(image_path)
-            #img = cv2.imread(image_path)
-            img = cv2.resize(cv2.imread(image_path),(IMG_WIDTH, IMG_HEIGHT))
+    for cat in os.listdir(data_dir):
+        sub_dir_path = os.path.join(data_dir,cat)
+        for image in os.listdir(sub_dir_path):
+            img = cv2.imread(os.path.join(sub_dir_path,image))
+            img = cv2.resize(img,(IMG_WIDTH,IMG_HEIGHT))
             images.append(img)
-            labels.append(int(i))
-    # print(len(images))
-    # print(len(labels))
-    return images, labels
+            labels.append(cat)
+    return (images,labels)
+
 
 def get_model():
     """
@@ -85,18 +76,27 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
-    model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.Conv2D(32,(3,3),activation = "relu",input_shape = (IMG_WIDTH, IMG_HEIGHT, 3)))
-    model.add(tf.keras.layers.MaxPooling2D(pool_size = (2,2)))
-    model.add(tf.keras.layers.Conv2D(32,(3,3),activation = "relu"))
-    model.add(tf.keras.layers.MaxPooling2D(pool_size = (2,2)))
-    model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dropout(0.5))
-    model.add(tf.keras.layers.Dense(128, activation = "relu"))
-    model.add(tf.keras.layers.Dense(64, activation = "relu"))
-    model.add(tf.keras.layers.Dense(NUM_CATEGORIES, activation = "softmax"))
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    print(model.summary())
-    return model
+    model = tf.keras.models.Sequential{[
+        tf.keras.layers.Conv2D(24,(3,3),activation = 'relu',input_shape = (IMG_WIDTH,IMG_HEIGHT,3)),
+
+        tf.keras.layers.MaxPooling2D(pool_size = (2,2)),
+
+        tf.keras.layers.Conv2D(16,(3,3),activation = 'relu',input_shape = (IMG_WIDTH,IMG_HEIGHT,3)),
+
+        tf.keras.layers.MaxPooling2D(pool_size = (3,3)),
+
+        tf.keras.layers.Flatten(),
+
+        tf.keras.layers.Dense(128,activation = 'relu'),
+        tf.keras.layers.Dropout(0.5),
+
+        tf.keras.layers.Dense(64,activation = 'relu'),
+        tf.keras.layers.Dropout(0.5),
+
+        tf.keras.layers.Dense(NUM_CATEGORIES,activation = 'softmax')
+
+    ]}
+
+
 if __name__ == "__main__":
     main()
