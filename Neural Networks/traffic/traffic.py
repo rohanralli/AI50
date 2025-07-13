@@ -97,7 +97,7 @@ def get_model():
 
     ])
     model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['accuracy'])
-
+    return model
 
 if __name__ == "__main__":
     main()
