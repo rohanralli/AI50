@@ -96,7 +96,7 @@ def get_model():
         tf.keras.layers.Dense(NUM_CATEGORIES,activation = 'softmax')
 
     ])
-    model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=[accuracy])
+    model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['accuracy'])
 
 
 if __name__ == "__main__":
