@@ -1,5 +1,4 @@
 import nltk
-nltk.download('stopwords')
 import sys
 import os
 import string
@@ -52,14 +51,10 @@ def load_files(directory):
     Given a directory name, return a dictionary mapping the filename of each
     `.txt` file inside that directory to the file's contents as a string.
     """
-    files_dict = {}
+    nameToContent = {}
     for file in os.listdir(directory):
-        #print(file)
-        files_dict[file] = open(os.path.join(directory,file), "r", encoding = sys.getdefaultencoding(), closefd = True, opener = None).read()
-        #print(open(os.path.join(directory,file)).read())
-    #print(files_dict)
-    return files_dict
-
+        nameToContent[file] = open(os.path.join(directory,file)).read()
+    return nameToContent
 
 
 def tokenize(document):
@@ -70,13 +65,13 @@ def tokenize(document):
     Process document by coverting all words to lowercase, and removing any
     punctuation or English stopwords.
     """
-    document = document.lower()
-    doc = nltk.tokenize.word_tokenize(document)
-    tokens = []
-    for word in doc:
-        if word not in string.punctuation and word not in nltk.corpus.stopwords.words("english"):
-            tokens.append(word)    
-    return tokens
+    unfiltered = nltk.tokenize.word_tokenize(document.lower())
+    filtered = []
+    for token in unfiltered:
+        if token not in string.punctuation and token not in nltk.corpus.stopwords.words("english"):
+            filtered.append(token)
+    return filtered
+
 
 
 def compute_idfs(documents):
@@ -87,22 +82,18 @@ def compute_idfs(documents):
     Any word that appears in at least one of the documents should be in the
     resulting dictionary.
     """
-    doc_count = {}
-    idfs = {}
-    uwords = set()
+    word_to_idf = {}
+    #collect number of docs for each word
     for doc in documents:
-        for word in documents[doc]:
-            uwords.add(word)
-    for word in uwords:
-        doc_count[word] = 0
-        idfs[word] = 0
-    for doc in documents:
-        for word in uwords:
-            if word in documents[doc]:
-                doc_count[word] += 1
-    for word in idfs:
-        idfs[word] = math.log(len(documents)/doc_count[word])
-    return idfs
+        for word in set(documents[doc]):
+            if word in word_to_idf:
+                word_to_idf[word] += 1
+            else:
+                word_to_idf[word] = 1
+    for word in word_to_idf:
+        num_appearances = word_to_idf[word]
+        word_to_idf[word] = math.log(len(documents) / num_appearances)
+    return word_to_idf
 
 
 def top_files(query, files, idfs, n):
@@ -112,24 +103,22 @@ def top_files(query, files, idfs, n):
     to their IDF values), return a list of the filenames of the the `n` top
     files that match the query, ranked according to tf-idf.
     """
-    best_file_list = []
-    file_assignments = {}
+    #dictionary matching files to their sums
+    file_to_sum = {}
     for file in files:
         sum = 0
         for word in query:
-            count = 0
-            for w in files[file]:
-                if word == w:
-                    count += 1
-            tfidf = idfs[word] * count
-            sum += tfidf
-        file_assignments[file] = sum
-    for i in range(n):
-        best_file = max(file_assignments, key = file_assignments.get)
-        best_file_list.append(best_file) 
-        del file_assignments[best_file]
-    return best_file_list
-    
+            if word in files[file]:
+                freq = 0
+                for word2 in files[file]:
+                    if word2 == word:
+                        freq += 1
+                sum += freq * idfs[word]
+        file_to_sum[file] = sum
+    #list of files ranked with top ranked in first positions
+    top_ranked_files = sorted(file_to_sum, file_to_sum.get, reverse = True)
+    return top_ranked_files[:n]
+
 
 
 
@@ -141,74 +130,33 @@ def top_sentences(query, sentences, idfs, n):
     the query, ranked according to idf. If there are ties, preference should
     be given to sentences that have a higher query term density.
     """
-    # print(query)
-    # sum1 = 0
-    # for word in query:
-    #     print("sum: ", sum1)
-    #     sum1 += idfs[word]
-    #     print(word, idfs[word])
-    # print(sum1)
-    best_sentence_list = []
-    sentence_assignments = {}
+    sentence_to_sum = {}
     for sentence in sentences:
-        # if sentence == 'Python 3.0 was released on 3 December 2008.' or sentence == 'Python 3.0, released in 2008, was a major revision of the language that is not completely backward-compatible, and much Python 2 code does not run unmodified on Python 3.':
-        #     print(sentences[sentence])
-        #     sum = 0
-        #     for word in query:
-        #         if word in sentences[sentence]:
-        #             print(word, idfs[word])
-        #             sum += idfs[word]
-        #     sentence_assignments[sentence] = sum
         sum = 0
         for word in query:
             if word in sentences[sentence]:
                 sum += idfs[word]
-        sentence_assignments[sentence] = sum
-    storage = {}
-    for p in sentence_assignments:
-        storage[p] = sentence_assignments[p]
-    #print(sentence_assignments)
-    for i in range(n):
-        best_sentence = max(sentence_assignments, key = sentence_assignments.get)
-        other_sentences = []
-        for p in sentence_assignments:
-            if p != best_sentence and sentence_assignments[p] == sentence_assignments[best_sentence]:
-                other_sentences.append(p)
-        other_sentences.append(best_sentence)
-        for i in range(len(other_sentences)-1):
-            if needs_swap(query,sentences,storage,other_sentences[i],other_sentences[i + 1]):
-                temp = other_sentences[i]
-                other_sentences[i] = best_sentence_list[i + 1]
-                other_sentences[i + 1] = temp
-        best_sentence_list.append(other_sentences[0]) 
-        del sentence_assignments[best_sentence]
-    print(storage)
-    # print(n)
-    # for i in range(n-1):
-    #     # count1, count2 = needs_swap(query,sentences,storage,best_sentence_list[i],best_sentence_list[i + 1])
-    #     if needs_swap(query,sentences,storage,best_sentence_list[i],best_sentence_list[i + 1]):
-    #         temp = best_sentence_list[i]
-    #         best_sentence_list[i] = best_sentence_list[i + 1]
-    #         best_sentence_list[i + 1] = temp
-
-    return best_sentence_list
-def needs_swap(query,sentences,sentence_assignments,sentence1,sentence2):
-    if sentence_assignments[sentence1] == sentence_assignments[sentence2]:
-        count1 = 0.0
-        for word in sentences[sentence1]:
-            if word in query:
-                count1 += 1
-        count2 = 0.0
-        for word in sentences[sentence2]:
-            if word in query:
-                count2 += 1
-        count1 /= len(sentences[sentence1])
-        count2 /= len(sentences[sentence2])
-        #return count1, count2
-        if count2 > count1:
-            return True
-        else:
-            return False
+        sentence_to_sum[sentence] = sum
+    top_ranked_sentences = sorted(sentence_to_sum, sentence_to_sum.get, reverse = True)
+    for i in range(len(top_ranked_sentences) - 1):
+        sentence1 = top_ranked_sentences[i]
+        sentence2 = top_ranked_sentences[i + 1]
+        if sentence_to_sum[sentence1] == sentence_to_sum[sentence2]:
+            q_d1 = 0
+            for word in sentence1:
+                if word in query:
+                    q_d1 += 1
+            q_d1 /= len(sentence1)
+            q_d2 = 0
+            for word in sentence2:
+                if word in query:
+                    q_d2 += 1
+            q_d2 /= len(sentence2)
+            if q_d2 > q_d1:
+                temp = top_ranked_sentences[i]
+                top_ranked_sentences[i] = top_ranked_sentences[i + 1]
+                top_ranked_sentences[i + 1] = temp
+    return top_ranked_sentences[:n]
 
 
 if __name__ == "__main__":
