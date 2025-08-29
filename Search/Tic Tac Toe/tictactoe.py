@@ -132,6 +132,7 @@ def x_player_best(board):
             return newv,action
         elif(newv > v):
             v = newv
+            
             move = action
     return v, move
         
@@ -147,5 +148,6 @@ def o_player_best(board):
             return newv,action
         elif(newv < v):
             v = newv
+            
             move = action
     return v, move
