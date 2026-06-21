@@ -137,7 +137,7 @@ def top_sentences(query, sentences, idfs, n):
             if word in sentences[sentence]:
                 sum += idfs[word]
         sentence_to_sum[sentence] = sum
-    top_ranked_sentences = sorted(sentence_to_sum, sentence_to_sum.get, reverse = True)
+    top_ranked_sentences = sorted(sentence_to_sum, key=sentence_to_sum.get, reverse = True)
     for i in range(len(top_ranked_sentences) - 1):
         sentence1 = top_ranked_sentences[i]
         sentence2 = top_ranked_sentences[i + 1]
