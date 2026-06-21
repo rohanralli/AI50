@@ -116,7 +116,7 @@ def top_files(query, files, idfs, n):
                 sum += freq * idfs[word]
         file_to_sum[file] = sum
     #list of files ranked with top ranked in first positions
-    top_ranked_files = sorted(file_to_sum, file_to_sum.get, reverse = True)
+    top_ranked_files = sorted(file_to_sum, key=file_to_sum.get, reverse = True)
     return top_ranked_files[:n]
 
 
